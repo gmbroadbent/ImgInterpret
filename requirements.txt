@@ -1,0 +1,6 @@
+numpy
+colorama
+matplotlib
+pyttsx3
+pillow
+pynput

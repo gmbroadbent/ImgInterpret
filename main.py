@@ -1,13 +1,17 @@
 # import pyttsx3
 import inspect
 import sys
+import time
+import math
 import numpy as np
 from datetime import datetime
 from matplotlib import pyplot as plt
+from matplotlib import colors as m_colors
 from colorama import Fore, Style, init
 from mpl_toolkits.mplot3d import axes3d, Axes3D
 from pynput.keyboard import Key, Listener
 import args
+import cv2
 
 # global transparent_img
 # global grid
@@ -190,6 +194,131 @@ def _plot(matrix):
     _plot_3d(vals[0], vals[1], vals[2])
 
 
+def _plot_hsv(matrix):
+    # _update()
+
+    # print(matrix)
+
+    global arg_vals
+
+    hist = np.zeros([180], dtype=float)
+
+    print("Fetching values...", end='    ')
+
+
+    for col in matrix:
+        for pix in col:
+            if pix[1] > 5 and pix[2] > 5:    # Prevents use of absolute black or white
+                hist[pix[0]] += 1
+
+    SF = 1000/np.amax(hist)
+
+    for i in range(len(hist)):
+        hist[i] *= SF
+
+    print(Fore.GREEN + "Done" + Fore.RESET)
+
+    print("Settings points...", end='    ')
+
+    points = np.zeros([180, 2, 2], dtype=float)
+
+    for i in range(len(hist)):
+        theta = i*2
+
+        if theta % 90 == 0:    # Theta = [0, 90, 180, 270]
+            if theta == 0:
+                points[i, 1] = [hist[i], 0]
+            else:
+                if theta == 90:
+                    points[i, 1] = [0, hist[i]]
+                else:
+                    if theta == 180:
+                        points[i, 1] = [-hist[i], 0]
+                    else:
+                        if theta == 270:
+                            points[i, 1] = [0, -hist[i]]
+                        else:
+                            print(Fore.RED + "\nERROR Setting point" + Fore.RESET)
+                            print("Theta: {}\nValue: {}".format(theta, hist[i]))
+                            exit(-1)
+        else:
+            r = theta*(math.pi/180)    # Convert to radians
+            if theta < 90:
+                points[i, 1] = [(math.cos(r) * hist[i]), (math.sin(r) * hist[i])]
+            else:
+                if theta < 180:
+                    r = math.pi-r
+                    points[i, 1] = [(-1 * math.cos(r) * hist[i]), (math.sin(r) * hist[i])]
+                else:
+                    if theta < 270:
+                        r = r-math.pi
+                        points[i, 1] = [(-1 * math.cos(r) * hist[i]), (-1 * math.sin(r) * hist[i])]
+                    else:
+                        r = r-(2*math.pi)
+                        points[i, 1] = [(math.cos(r) * hist[i]), (-1 * math.sin(r) * hist[i])]
+
+
+        # print("{0:03d}\t{1}".format(i, hist[i]))
+        # print("{}\t{}".format(i, hist[i]))
+
+    print(Fore.GREEN + "Done" + Fore.RESET)
+
+    _plot_2d(points)
+
+    # for i in range(len(points)):
+        # print("{0:03d}\t{1:04d} x {1:04d}".format(i*2, int(points[i, 1, 0]), int(points[i, 1, 1])))
+        # print("{0:03d}\t{1}".format(i*2, points[i, 1]))
+        # print(math.hypot(points[i, 1, 0], points[i, 1, 1]) > 1000)
+
+
+
+def _plot_2d(vals):
+
+    global arg_vals
+
+
+    # fig = plt.figure()
+    # ax = Axes3D(fig)
+
+    x = np.zeros([2], dtype=float)
+    y = np.zeros([2], dtype=float)
+
+    c = plt.Circle((0, 0), 1000, fill=False)
+
+    for i in range(len(vals)):
+        x[0] = vals[i, 0, 0]
+        x[0] = vals[i, 1, 0]
+
+        y[0] = vals[i, 0, 1]
+        y[0] = vals[i, 1, 1]
+
+        hsv = np.array([(i/180), 0.5, 0.5], dtype=float)
+        rgb = m_colors.hsv_to_rgb(hsv)
+
+        plt.plot(x, y, c=rgb)
+
+    axes = plt.gca()
+
+    axes.add_artist(c)
+
+    axes.set_xlim([-1010, 1010])
+    axes.set_ylim([-1010, 1010])
+
+    l = Listener(on_press=_listen_press)
+    l.start()
+    print("\n"*5)
+    print("-"*30)
+    print("\nSave Figure: " + Fore.BLUE + "<SPACE>" + Fore.RESET)
+    print("Exit: " + Fore.BLUE + "<ESC>\n" + Fore.RESET)
+    print("-"*30)
+    print()
+
+    if not arg_vals["g"]:
+        axes.set_axis_off()
+
+    plt.show()
+
+
 def _plot_png(path):
     # _update()
 
@@ -228,6 +357,29 @@ def _plot_jpg(path):
     _plot(matrix)
 
 
+def _work_hsv(path):
+    # _update()
+
+    print("Reading & Formatting file...", end='    ')
+
+    try:
+        mat_in = cv2.imread(path, cv2.IMREAD_COLOR)  # imports image as BGR
+    except:
+        print(Fore.RED + "\nERROR:\n\tIssue reading file" + Fore.RESET)
+        print("\tFile may not be suitable for use")
+        exit(-1)
+
+    try:
+        matrix = cv2.cvtColor(mat_in, cv2.COLOR_BGR2HSV)    # Convert BGR to HSV
+    except:
+        print(Fore.RED + "\nERROR:\n\tIssue converting data" + Fore.RESET)
+        exit(-1)
+
+    print(Fore.GREEN + "Done" + Fore.RESET)
+
+    _plot_hsv(matrix)
+
+
 def _listen_press(key):
     # global saved
     # print("Key Pressed: " + Fore.BLUE + "{}".format(key) + Style.RESET_ALL)
@@ -258,16 +410,22 @@ def _main(path):
 
     print("\n")
 
-    extension = path.split(".")[-1].upper()
+    global arg_vals
 
-    if extension == "PNG":
-        _plot_png(path)
+    if arg_vals["h"]:
+        # time.sleep(2.5)
+        _work_hsv(path)
     else:
-        if extension == "JPG":
-            _plot_jpg(path)
+        extension = path.split(".")[-1].upper()
+
+        if extension == "PNG":
+            _plot_png(path)
         else:
-            print(Fore.RED + "ERROR:\n\tUNUSABLE FORMAT" + Fore.RESET)
-            exit(-1)
+            if extension == "JPG":
+                _plot_jpg(path)
+            else:
+                print(Fore.RED + "ERROR:\n\tUNUSABLE FORMAT" + Fore.RESET)
+                exit(-1)
 
 
 if __name__ == "__main__":
@@ -276,8 +434,10 @@ if __name__ == "__main__":
     # grid = False
 
     arg_vals = {"g": False,
+                "h": False,
                 "t": False,
-                "a": False}
+                "a": False,
+                "?": False}
 
     print("\n"*10)
 
@@ -288,7 +448,7 @@ if __name__ == "__main__":
     for arg in sys.argv[1:]:
         if arg[0] == '-':
             if len(arg) == 2:
-                if arg[1] == 'h':
+                if arg[1] == '?':
                     args._help()
                 else:
                     if arg[1] == 't':
@@ -300,11 +460,14 @@ if __name__ == "__main__":
                             if arg[1] == 'a':
                                 arg_vals["a"] = True
                             else:
-                                print(Fore.RED + arg + Fore.RESET, end='    ')
-                                print("Invalid switch    " + Fore.CYAN + "(-h for help)" + Fore.RESET)
+                                if arg[1] == "h":
+                                    arg_vals["h"] = True
+                                else:
+                                    print(Fore.RED + arg + Fore.RESET, end='    ')
+                                    print("Invalid switch    " + Fore.CYAN + "(-? for help)" + Fore.RESET)
             else:
                 print(Fore.RED + arg + Fore.RESET, end='    ')
-                print("Invalid argument    " + Fore.CYAN + "(-h for help)" + Fore.RESET)
+                print("Invalid argument    " + Fore.CYAN + "(-? for help)" + Fore.RESET)
         else:
             if args._check_path(arg):
                 _main(arg)

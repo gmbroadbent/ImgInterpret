@@ -7,10 +7,11 @@ def _help():
     print(Fore.BLUE + "Help Menu" + Fore.RESET)
     print("\\ImgInterpret> python main.py [-h] [-t] [-g] [-a] <path>\n")
 
-    print(Fore.LIGHTCYAN_EX + "-h" + Fore.RESET + " - Display help menu")
+    print(Fore.LIGHTCYAN_EX + "-?" + Fore.RESET + " - Display help menu")
     print(Fore.LIGHTCYAN_EX + "-t" + Fore.RESET + " - Image background will be transparent")
     print(Fore.LIGHTCYAN_EX + "-g" + Fore.RESET + " - Grid lines included in image")
     print(Fore.LIGHTCYAN_EX + "-a" + Fore.RESET + " - Represents repeated RGB values with modified a Alpha value")
+    print(Fore.LIGHTCYAN_EX + "-h" + Fore.RESET + " - Represents hue values")
     print()
     print(Fore.LIGHTCYAN_EX + "<path>" + Fore.RESET + " - The path to image file to use.    (eg: bin/img.png)")
 

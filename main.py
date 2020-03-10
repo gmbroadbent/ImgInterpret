@@ -1,23 +1,30 @@
-# import pyttsx3
-import inspect
-import sys
-import time
-import math
-import numpy as np
-from datetime import datetime
-from matplotlib import pyplot as plt
-from matplotlib import colors as m_colors
-from colorama import Fore, Style, init
-from mpl_toolkits.mplot3d import axes3d, Axes3D
-from pynput.keyboard import Key, Listener
-import args
-import cv2
+try:
+    import time
+    # import pyttsx3
+    import inspect
+    import sys
+    import math
+    import numpy as np
+    from datetime import datetime
+    from matplotlib import pyplot as plt
+    from matplotlib import colors as m_colors
+    from colorama import Fore, Style, init
+    from mpl_toolkits.mplot3d import axes3d, Axes3D
+    from pynput.keyboard import Key, Listener
+    import cv2
+    import args
+    import menu
+except ModuleNotFoundError:
+    print("ERROR:\n\tREQUIRED MODULES NOT FOUND")
+
+    _ = input("\nPress enter to end")
+    exit(-1)
 
 # global transparent_img
 # global grid
 global arg_vals
 
-init()    # Initiates pynput
+init()    # Initiates colorama
 
 
 
@@ -442,8 +449,20 @@ if __name__ == "__main__":
     print("\n"*10)
 
     if len(sys.argv) < 2:
-        args._help()
-        exit(1)
+        menu_args = menu._main()
+        arg_vals['g'] = menu_args[0]
+        arg_vals['h'] = menu_args[1]
+        arg_vals['t'] = menu_args[2]
+        arg_vals['a'] = menu_args[3]
+        path = menu_args[4]
+        try:
+            _main(path)
+        except ImportError:
+            print(Fore.RED + "ERROR:\n\tREQUIRED MODULES MISSING" + Fore.RESET)
+            exit(-1)
+        except:
+            print(Fore.RED + "ERROR:\n\tUNKNOWN FAILURE" + Fore.RESET)
+            exit(-1)
 
     for arg in sys.argv[1:]:
         if arg[0] == '-':
@@ -470,8 +489,11 @@ if __name__ == "__main__":
                 print("Invalid argument    " + Fore.CYAN + "(-? for help)" + Fore.RESET)
         else:
             if args._check_path(arg):
-                _main(arg)
-                exit(1)
-                # else:
-                    # exit(1)
-            # exit(1)
+                try:
+                    _main(arg)
+                    exit(1)
+                except ImportError:
+                    print(Fore.RED + "ERROR:\n\tISSUE WITH REQUIRED MODULES" + Fore.RESET)
+                    exit(-1)
+
+    print("(-? for help)")

@@ -45,7 +45,7 @@ def _check_format(path):
     _, ext = os.path.splitext(path)
 
     if len(ext) < 2:
-        print(len(ext))
+        # print(len(ext))
         print(Fore.RED + "No extension" + Fore.RESET)
         return False
 

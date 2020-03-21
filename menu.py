@@ -9,7 +9,8 @@ stop = False
 args = {"g": False,
         "h": False,
         "t": False,
-        "a": False}
+        "a": False,
+        "w": False}
 
 def _main():
     global args
@@ -23,6 +24,7 @@ def _main():
     print("H - HSV representation")
     print("T - Transparent background")
     print("A - Cumulative data-points")
+    print("W - Write pixel values to text file")
     print()
     print("Press <ENTER> to continue to input path")
     print("Or <ESC> to exit")
@@ -63,21 +65,23 @@ def _main():
         else:
             print("No such path exists\n")
 
-    args_out = [args['g'], args['h'], args['t'], args['a'], path_in]
+    args_out = [args['g'], args['h'], args['t'], args['a'], args['w'], path_in]
     print(args_out)
     # return args_out
-    return args['g'], args['h'], args['t'], args['a'], path_in
+    return args['g'], args['h'], args['t'], args['a'], args['w'], path_in
 
 
 def _print_args():
     global args
 
-    sys.stdout.write("\b"*7)
+    back_len = (2*len(args))-1
+
+    sys.stdout.write("\b"*back_len)
     sys.stdout.flush()
 
     for arg, val in args.items():
         e = " "
-        if arg == "a":
+        if arg == "w":
             e = ""
 
         if val:

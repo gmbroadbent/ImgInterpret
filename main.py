@@ -3,6 +3,7 @@ try:
     # import pyttsx3
     import inspect
     import sys
+    import os
     import math
     import numpy as np
     from datetime import datetime
@@ -104,17 +105,60 @@ def _plot_3d(x, y, z, a=0.25):
     # l.close()
 
 
-def _test():
-    path = 'bin\\img_small.png'
-    # path = 'bin\\img_main.png'
-    matrix = plt.imread(path)    # float vals 0-1
-    matrix *= 255    # float vals 0-255
-    matrix = matrix.astype(int)    # int vals 0-255
+def _write(path='bin\\img_small.png'):
+    out_string = ""
+
+    ext = os.path.splitext(path)[1].upper()[1:]
+
+    matrix = plt.imread(path)
+    if ext == "PNG":
+        matrix *= 255    # float vals 0-255
+        matrix = matrix.astype(int)    # int vals 0-255
+
+    #try:
+    #    if ext == "PNG":
+    #        matrix = plt.imread(path)    # float vals 0-1
+    #        matrix *= 255    # float vals 0-255
+    #        matrix = matrix.astype(int)    # int vals 0-255
+    #    else:
+    #        if ext == "JPG":
+    #            mat_in = plt.imread(path)  # float vals 0-255
+    #except ValueError:
+    #    print(Fore.RED + "\nERROR:\n\tIssue reading file" + Fore.RESET)
+    #    print("\tFile may not be suitable for use")
+    #    exit(-1)
+    #except:
+    #    print(Fore.RED + "ERROR:\n\tCOULD NOT READ FILE" + Fore.RESET)
+    #    exit(-1)
+            
+
+    m_0 = matrix.shape[0]
+    m_1 = matrix.shape[1]
+
+    try:
+        f_name = os.path.basename(path)
+        name, ext = os.path.splitext(f_name)
+        new_fname = (name + "[" + ext[1:] + "].txt").upper()
+        out_path = "BIN\\" + new_fname
+    except:
+        print(Fore.RED + "ERROR:\n\tCOULD NOT GENERATE FILE NAME" + Fore.RESET)
+        exit(-1)
+    
+
+    pixels = m_0*m_1
+    num_len = len(str(pixels))
+    back = (2* num_len)+1
+    
 
     print("\n\n")
 
     for i in range(matrix.shape[0]):
         for j in range(matrix.shape[1]):
+
+            cur_pix = (i*m_0) + j + 1
+            sys.stdout.write("\b"*back)
+            sys.stdout.write('{val:0{width}}/{val1:0{width}}'.format(val=cur_pix, width=num_len, val1=pixels))
+            sys.stdout.flush()
 
             # print("[", end='')
             # print(Fore.RED + '{0:03d}'.format(matrix[i][j][0]), end=' ')
@@ -126,13 +170,42 @@ def _test():
             # print('{0:03d}'.format(matrix[i][j][1]), end='.')
             # print('{0:03d}'.format(matrix[i][j][2]), end='    ')
 
-            print('{0:03d}'.format(matrix[i][j][0]), end='.')
-            print('{0:03d}'.format(matrix[i][j][1]), end='.')
-            print('{0:03d}'.format(matrix[i][j][2]), end='  ')
+            # print('{0:03d}'.format(matrix[i][j][0]), end='.')
+            # print('{0:03d}'.format(matrix[i][j][1]), end='.')
+            # print('{0:03d}'.format(matrix[i][j][2]), end='  ')
 
-        print()
+            r = '{0:03d}'.format(matrix[i][j][0])
+            g = '{0:03d}'.format(matrix[i][j][0])
+            b = '{0:03d}'.format(matrix[i][j][0])
+			
+            # out_string = out_string + '{0:03d}'.format(matrix[i][j][0]
+            out_string = out_string + r
+            out_string = out_string + "."
+            out_string = out_string + g
+            out_string = out_string + '.'
+            out_string = out_string + b
+			
+            if j < matrix.shape[1]:
+                out_string = out_string + "    "
+
+        # print()
+        out_string = out_string + '\n'
 
     print("\n\n")
+
+    try:
+        with open(out_path, 'w') as file:
+            try:
+                file.write(out_string[:-1])
+                print("Data written to " + out_path)
+            except:
+                print(Fore.RED + "ERROR:\n\tCOULD NOT WRITE TO FILE" + Fore.RESET)
+                exit(-1)
+    except:
+        print(Fore.RED + "ERROR:\n\tCOULD NOT OPEN FILE" + Fore.RESET)
+        exit(-1)
+	
+    # print(out_string)
 
 
 def _plot(matrix):
@@ -419,20 +492,23 @@ def _main(path):
 
     global arg_vals
 
-    if arg_vals["h"]:
-        # time.sleep(2.5)
-        _work_hsv(path)
+    if arg_vals["w"]:
+        _write(path)
     else:
-        extension = path.split(".")[-1].upper()
-
-        if extension == "PNG":
-            _plot_png(path)
+        if arg_vals["h"]:
+            # time.sleep(2.5)
+            _work_hsv(path)
         else:
-            if extension == "JPG":
-                _plot_jpg(path)
+            extension = path.split(".")[-1].upper()
+
+            if extension == "PNG":
+                _plot_png(path)
             else:
-                print(Fore.RED + "ERROR:\n\tUNUSABLE FORMAT" + Fore.RESET)
-                exit(-1)
+                if extension == "JPG":
+                    _plot_jpg(path)
+                else:
+                    print(Fore.RED + "ERROR:\n\tUNUSABLE FORMAT" + Fore.RESET)
+                    exit(-1)
 
 
 if __name__ == "__main__":
@@ -444,6 +520,7 @@ if __name__ == "__main__":
                 "h": False,
                 "t": False,
                 "a": False,
+                "w": False,
                 "?": False}
 
     print("\n"*10)
@@ -454,15 +531,17 @@ if __name__ == "__main__":
         arg_vals['h'] = menu_args[1]
         arg_vals['t'] = menu_args[2]
         arg_vals['a'] = menu_args[3]
-        path = menu_args[4]
+        arg_vals['w'] = menu_args[4]
+        path = menu_args[5]
+        
         try:
             _main(path)
         except ImportError:
             print(Fore.RED + "ERROR:\n\tREQUIRED MODULES MISSING" + Fore.RESET)
             exit(-1)
-        except:
-            print(Fore.RED + "ERROR:\n\tUNKNOWN FAILURE" + Fore.RESET)
-            exit(-1)
+        #except:
+            #print(Fore.RED + "ERROR:\n\tUNKNOWN FAILURE" + Fore.RESET)
+            #exit(-1)
 
     for arg in sys.argv[1:]:
         if arg[0] == '-':
@@ -482,8 +561,11 @@ if __name__ == "__main__":
                                 if arg[1] == "h":
                                     arg_vals["h"] = True
                                 else:
-                                    print(Fore.RED + arg + Fore.RESET, end='    ')
-                                    print("Invalid switch    " + Fore.CYAN + "(-? for help)" + Fore.RESET)
+                                    if arg[1] == "w":
+                                        arg_vals["w"] = True
+                                    else:
+                                        print(Fore.RED + arg + Fore.RESET, end='    ')
+                                        print("Invalid switch    " + Fore.CYAN + "(-? for help)" + Fore.RESET)
             else:
                 print(Fore.RED + arg + Fore.RESET, end='    ')
                 print("Invalid argument    " + Fore.CYAN + "(-? for help)" + Fore.RESET)

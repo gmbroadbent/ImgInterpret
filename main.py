@@ -213,7 +213,19 @@ def _plot(matrix):
 
     global arg_vals
 
-    vals = np.zeros([3, matrix.shape[0]*matrix.shape[1]], dtype=int)
+    pixs = matrix.shape[0]*matrix.shape[1]
+
+    vals = np.zeros([3, pixs], dtype=np.uint8)    # Works for image with 255 or less pixels
+
+
+    if pixs > 255 and pixs <= 65535:
+        vals = vals.astype(np.uint16)
+        
+    if pixs > 65535 and pixs <= 4294967295:
+        vals = vals.astype(np.uint32)
+        
+    if pixs > 4294967295:
+        vals = vals.astype(np.uint64)
 
     pos = 0
 
@@ -411,7 +423,7 @@ def _plot_png(path):
         print("\tFile may not be suitable for use")
         exit(-1)
     matrix = mat_in * 255  # float vals 0-225
-    matrix = matrix.astype(int)  # int vals 0-225
+    matrix = matrix.astype(np.uint8)  # int vals 0-225
 
     print(Fore.GREEN + "Done" + Fore.RESET)
 
@@ -430,7 +442,7 @@ def _plot_jpg(path):
         print("\tFile may not be suitable for use")
         exit(-1)
     matrix = mat_in  # float vals 0-255
-    matrix = matrix.astype(int)  # int vals 0-255
+    matrix = matrix.astype(np.uint8)  # int vals 0-255
 
     print(Fore.GREEN + "Done" + Fore.RESET)
 
